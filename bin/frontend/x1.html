@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบปัญญาประดิษฐ์ตรวจจับและคัดแยกขยะอัตโนมัติ</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Sarabun', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #090d16; /* สีอวกาศเข้มสไตล์ศูนย์ควบคุม */
+            color: #e2e8f0;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ส่วนหัวระบบแดชบอร์ด */
+        .หัวข้อระบบ {
+            background-color: #111827;
+            padding: 15px 25px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);
+            border-left: 5px solid #10b981; /* สีเขียวรักษ์โลก */
+        }
+
+        /* พื้นที่ทำงานหลัก ซ้าย-ขวา */
+        .พื้นที่ทำงาน {
+            display: grid;
+            grid-template-columns: 1.4fr 1.6fr;
+            gap: 20px;
+            flex-grow: 1;
+            height: calc(100vh - 120px);
+        }
+
+        /* ฝั่งซ้าย: กล้องจำลองและปุ่มอัปโหลด */
+        .โซนกล้องตรวจจับ {
+            background-color: #111827;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #1f2937;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .หน้าจอกล้อง {
+            width: 100%;
+            height: 300px;
+            background-color: #030712;
+            border: 2px dashed #10b981;
+            border-radius: 8px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .ภาพช่องเล็ง {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.7;
+        }
+
+        /* กรอบจำลอง Bounding Box ของ Machine Learning */
+        .กรอบโมเดลตรวจจับ {
+            position: absolute;
+            border: 3px solid #ff3366;
+            background-color: rgba(255, 49, 49, 0.15);
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: none; /* เปิดปิดด้วยคริปต์ */
+        }
+
+        .ตารางเลือกภาพ {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .บัตรเลือกภาพ {
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            padding: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .บัตรเลือกภาพ:hover {
+            border-color: #10b981;
+            transform: translateY(-2px);
+        }
+
+        .ภาพตัวอย่าง {
+            width: 100%;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        /* ฝั่งขวา: ผลการประมวลผลและการคัดแยก */
+        .โซนประมวลผล {
+            background-color: #111827;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #1f2937;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .กล่องสถานะอัจฉริยะ {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #34d399;
+            font-weight: bold;
+        }
+
+        .แผงข้อมูลคะแนน {
+            background-color: #030712;
+            border: 1px solid #1f2937;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .แถวสถิติ {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #1f2937;
+            font-size: 15px;
+        }
+
+        .ตัวเลขเน้น {
+            font-weight: bold;
+            color: #10b981;
+        }
+
+        .ถังขยะคัดแยก {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            color: #ffffff;
+            background-color: #374151; /* สีพื้นฐาน */
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* กลุ่มปุ่มควบคุม */
+        .กลุ่มปุ่มกด {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .ปุ่มทำงาน {
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #090d16;
+            background-color: #10b981;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-align: center;
+        }
+
+        .ปุ่มทำงาน:hover {
+            background-color: #059669;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ส่วนหัวแดชบอร์ด -->
+    <div class="หัวข้อระบบ">
+        <div>
+            <h2>ระบบปัญญาประดิษฐ์วิเคราะห์และคัดแยกขยะอัตโนมัติ (AI Waste Detection)</h2>
+            <p style="color: #9ca3af; font-size: 13px;">แบบจำลองโครงสร้างหน้าจอเพื่อรองรับการเชื่อมต่อโมเดล Machine Learning ในอนาคต</p>
+        </div>
+        <div style="text-align: right; font-size: 14px;">
+            <p>สถานะเซิร์ฟเวอร์คลาวด์: เชื่อมต่ออยู่</p>
+            <p style="color: #10b981;">● พร้อมรับข้อมูลภาพถ่าย</p>
+        </div>
+    </div>
+
+    <!-- พื้นที่ทำงานหลัก -->
+    <div class="พื้นที่ทำงาน">
+        
+        <!-- ฝั่งซ้าย: ระบบกล้องวิดีโอ/สายพานจำลอง -->
+        <div class="โซนกล้องตรวจจับ">
+            <h3>📷 ภาพถ่ายจากกล้องตรวจจับขยะหน้าร้าน / สายพาน</h3>
+            <p style="color: #9ca3af; font-size: 13px;">โปรดเลือกรูปภาพวัตถุด้านล่างเพื่อจำลองการส่งค่าไปยังโมเดลคัดแยกขยะ</p>
+            
+            <!-- หน้าต่างกล้องจำลองพร้อม Bounding Box -->
+            <div class="หน้าจอกล้อง">
+                <span id="ข้อความรอสาย" style="color: #4b5563; position: absolute;">[ รอการป้อนข้อมูลภาพเข้าสู่สายพานประมวลผล ]</span>
+                <img id="จอภาพหลัก" src="" alt="" class="ภาพช่องเล็ง" style="display: none;">
+                
+                <!-- กล่องสมมติทำกรอบครอบตัวขยะ (YOLO Box) -->
+                <div id="กรอบตรวจจับ" class="กรอบโมเดลตรวจจับ">
+                    <span id="ป้ายชื่อโมเดล">Unknown</span> <span id="เปอร์เซ็นต์โมเดล">0%</span>
+                </div>
+            </div>
+
+            <!-- แคตตาล็อกรูปภาพจำลองขยะประเภทต่างๆ -->
+            <div class="ตารางเลือกภาพ">
+                <div class="บัตรเลือกภาพ" onclick="เริ่มตรวจจับขยะ('Plastic_Bottle', 96.8, 'ขยะรีไซเคิล (Recyclable)', '#2563eb', 'https://images.unsplash.com/photo-1618477388954-7852f32655ec?w=300')">
+                    <img src="https://images.unsplash.com/photo-1618477388954-7852f32655ec?w=300" alt="ขวดพลาสติก" class="ภาพตัวอย่าง">
+                    <span style="font-size: 11px;">ขวดน้ำเปล่า</span>
+                </div>
+                <div class="บัตรเลือกภาพ" onclick="เริ่มตรวจจับขยะ('Aluminum_Can', 94.2, 'ขยะรีไซเคิล (Recyclable)', '#2563eb', 'https://images.unsplash.com/photo-1536638317175-32449e112c58?w=300')">
+                    <img src="https://images.unsplash.com/photo-1536638317175-32449e112c58?w=300" alt="กระป๋องน้ำอัดลม" class="ภาพตัวอย่าง">
+                    <span style="font-size: 11px;">กระป๋องน้ำ</span>
+                </div>
+                <div class="บัตรเลือกภาพ" onclick="เริ่มตรวจจับขยะ('Used_Battery', 98.5, 'ขยะอันตราย (Hazardous)', '#dc2626', 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=300')">
+                    <img src="https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=300" alt="ถ่านไฟฉาย" class="ภาพตัวอย่าง">
+                    <span style="font-size: 11px;">ถ่านใช้แล้ว</span>
+                </div>
+                <div class="บัตรเลือกภาพ" onclick="เริ่มตรวจจับขยะ('Food_Waste', 87.1, 'ขยะย่อยสลายได้ (Organic)', '#16a34a', 'https://images.unsplash.com/photo-1543362906-acfc16c67564?w=300')">
+                    <img src="https://images.unsplash.com/photo-1543362906-acfc16c67564?w=300" alt="เศษอาหาร" class="ภาพตัวอย่าง">
+                    <span style="font-size: 11px;">เศษผลไม้</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ฝั่งขวา: ผลลัพธ์และค่าสถิติจาก Machine Learning -->
+        <div class="โซนประมวลผล">
+            <h3>⚡ ผลการประมวลผลคำนวณเชิงคณิตศาสตร์และวิเคราะห์</h3>
+            
+            <div class="กล่องสถานะอัจฉริยะ" id="กล่องความเห็น">
+                🤖 พร้อมรับชุดคำสั่ง: คลิกเลือกวัตถุทางด้านซ้ายเพื่อจำลองการสแกนผ่านอัลกอริทึมเครือข่ายประสาทเทียม (Neural Network)
+            </div>
+
+            <div class="แผงข้อมูลคะแนน">
+                <div class="แถวสถิติ">
+                    <span>รหัสคลาสตรวจเจอ (Detected Class Label):</span>
+                    <span id="ป้ายสากล" class="ตัวเลขเน้น" style="color: #f59e0b;">-</span>
+                </div>
+                <div class="แถวสถิติ">
+                    <span>ความน่าจะเป็นสูงสุด (Confidence Score):</span>
+                    <span id="คะแนนแม่นยำ" class="ตัวเลขเน้น">-</span>
+                </div>
+                <div class="แถวสถิติ">
+                    <span>ความเร็วในการประมวลผลอินเฟอเรนซ์:</span>
+                    <span id="เวลาสแกน" class="ตัวเลขเน้น">-</span>
+                </div>
+            </div>
+
+            <h3>📌 ผลลัพธ์ถังขยะและกลไกคัดแยกที่สั่งการ</h3>
+            <div id="กล่องถังขยะ" class="ถังขยะคัดแยก">
+                ระบบรอสัญญาณสั่งการคัดแยก...
+            </div>
+
+            <!-- ปุ่มอัปเกรดความรู้ในอนาคต -->
+            <div class="กลุ่มปุ่มกด">
+                <div class="ปุ่มทำงาน" onclick="คำแนะนำเพิ่มโมเดล()">
+                    ⚙️ ตรวจสอบโค้ดเชื่อมต่อสคริปต์ Machine Learning (สำหรับนักพัฒนา)
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ส่วนตรรกะจาวาสคริปต์จำลองการอินเฟอเรนซ์ (Inference Mockup) -->
+    <script>
+        function เริ่มตรวจจับขยะ(ชื่อวัตถุ, ความแม่นยำ, ประเภทถัง, สีถัง, ลิงก์รูป) {
+            // 1. เปิดแสดงรูปภาพบนหน้าจอกล้องหลัก
+            document.getElementById('ข้อความรอสาย').style.display = 'none';
+            const จอภาพหลัก = document.getElementById('จอภาพหลัก');
+            จอภาพหลัก.src = ลิงก์รูป;
+            จอภาพหลัก.style.display = 'block';
+
+            // 2. จำลองการประมวลผลดึงกล่อง Bounding Box (พิกัดแบบจำลองของ YOLO)
+            const กรอบตรวจจับ = document.getElementById('กรอบตรวจจับ');
+            กรอบตรวจจับ.style.display = 'block';
+            กรอบตรวจจับ.style.top = '30px';
+            กรอบตรวจจับ.style.left = '40px';
+            กรอบตรวจจับ.style.width = '70%';
+            กรอบตรวจจับ.style.height = '70%';
+            กรอบตรวจจับ.style.borderColor = สีถัง;
+
+            document.getElementById('ป้ายชื่อโมเดล').innerText = ชื่อวัตถุ;
+            document.getElementById('เปอร์เซ็นต์โมเดล').innerText = ความแม่นยำ + "%";
+
+            // 3. แสดงผลลัพธ์ข้อมูลคำนวณหลังบ้านฝั่งขวา
+            document.getElementById('ป้ายสากล').innerText = ชื่อวัตถุ;
+            document.getElementById('คะแนนแม่นยำ').innerText = ความแม่นยำ + " %";
+            
+            // จำลองความเร็วการสแกนด้วยตัวเลขทศนิยมสุ่มสไตล์ AI ประมวลผลเร็ว
+            let ความเร็วสุ่ม = (Math.random() * (25.5 - 12.1) + 12.1).toFixed(2);
+            document.getElementById('เวลาสแกน').innerText = ความเร็วสุ่ม + " มิลลิวินาที (ms)";
+
+            // 4. สั่งเปลี่ยนสีและข้อความของช่องแยกประเภทถังขยะอัตโนมัติ
+            const กล่องถังขยะ = document.getElementById('กล่องถังขยะ');
+            กล่องถังขยะ.innerText = "เปิดประตูกลไก: สู่ช่อง " + ประเภทถัง;
+            กล่องถังขยะ.style.backgroundColor = สีถัง;
+
+            // 5. อัปเดตกล่องความเห็นหุ่นยนต์
+            document.getElementById('กล่องความเห็น').innerHTML = `⚡ ตรวจจับวัตถุ ${ชื่อวัตถุ} สำเร็จ! อัลกอริทึมได้สั่งยิงลมเป่าแยกชิ้นส่วนขยะนี้ตรงไปยังช่อง ${ประเภทถัง} เรียบร้อยแล้วเพื่อสุขอนามัยที่ดี`;
+        }
+
+        function คำแนะนำเพิ่มโมเดล() {
+            // ฟังก์ชันให้แนวทางแก่ผู้ใช้งานหรือผู้ตรวจงาน เพื่อนำไปต่อยอดใส่ ML จริงภายหลัง
+            alert("คำแนะนำสำหรับอนาคต:\nคุณสามารถเขียนโค้ดเพิ่มโดยโหลดไลบรารีโค้ดเช่น <script src='https://cdn.jsdelivr.net/npm/@tensorflow/tfjs'> ไว้ในส่วนหัวเว็บ แล้วเขียนฟังก์ชันเรียกใช้โมเดลไฟล์ .json มาผูกสวมรอยทับฟังก์ชัน 'เริ่มตรวจจับขยะ' นี้ได้ทันทีครับ!");
+        }
+    </script>
+</body>
+</html>
