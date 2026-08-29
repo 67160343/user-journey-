@@ -196,6 +196,22 @@
             background-color: #059669;
             box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
         }
+
+        /* ปุ่มออกจากระบบสไตล์ใหม่ */
+        .ปุ่มออกจากระบบ {
+            padding: 6px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #ef4444;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .ปุ่มออกจากระบบ:hover {
+            background-color: #dc2626;
+        }
     </style>
 </head>
 <body>
@@ -208,7 +224,11 @@
         </div>
         <div style="text-align: right; font-size: 14px;">
             <p>สถานะเซิร์ฟเวอร์คลาวด์: เชื่อมต่ออยู่</p>
-            <p style="color: #10b981;">● พร้อมรับข้อมูลภาพถ่าย</p>
+            <p style="color: #10b981; margin-bottom: 8px;">● พร้อมรับข้อมูลภาพถ่าย</p>
+            <!-- เพิ่มปุ่มออกจากระบบตรงนี้ -->
+            <button class="ปุ่มออกจากระบบ" onclick="ออกจากระบบ()">
+                🚪 ออกจากระบบ
+            </button>
         </div>
     </div>
 
@@ -282,6 +302,11 @@
 
             <!-- ปุ่มอัปเกรดความรู้ในอนาคต -->
             <div class="กลุ่มปุ่มกด">
+                <!-- เพิ่มปุ่มเปลี่ยนหน้าไปที่รายงานสถิติ -->
+                <div class="ปุ่มทำงาน" style="background-color: #3b82f6; color: white;" onclick="window.location.href='report.html'">
+                    📊 ดูรายงานสถิติย้อนหลัง (หน้าถัดไป)
+                </div>
+
                 <div class="ปุ่มทำงาน" onclick="คำแนะนำเพิ่มโมเดล()">
                     ⚙️ ตรวจสอบโค้ดเชื่อมต่อสคริปต์ Machine Learning (สำหรับนักพัฒนา)
                 </div>
@@ -331,6 +356,16 @@
         function คำแนะนำเพิ่มโมเดล() {
             // ฟังก์ชันให้แนวทางแก่ผู้ใช้งานหรือผู้ตรวจงาน เพื่อนำไปต่อยอดใส่ ML จริงภายหลัง
             alert("คำแนะนำสำหรับอนาคต:\nคุณสามารถเขียนโค้ดเพิ่มโดยโหลดไลบรารีโค้ดเช่น <script src='https://cdn.jsdelivr.net/npm/@tensorflow/tfjs'> ไว้ในส่วนหัวเว็บ แล้วเขียนฟังก์ชันเรียกใช้โมเดลไฟล์ .json มาผูกสวมรอยทับฟังก์ชัน 'เริ่มตรวจจับขยะ' นี้ได้ทันทีครับ!");
+        }
+
+        // ฟังก์ชันใหม่สำหรับออกจากระบบ
+        function ออกจากระบบ() {
+            if(confirm("คุณต้องการออกจากระบบใช่หรือไม่?")) {
+                // ล้างค่า Token ออกจากระบบ (ถ้ามีการเก็บไว้ตอน Login)
+                localStorage.removeItem('authToken');
+                // สั่งให้เบราว์เซอร์เปลี่ยนหน้าไปที่ login.html
+                window.location.href = 'login.html';
+            }
         }
     </script>
 </body>
